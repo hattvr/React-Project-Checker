@@ -1,0 +1,23 @@
+{
+  "customers": [
+    {
+      "id": 0,
+      "name": "Mary Jackson",
+      "email": "maryj@abc.com",
+      "password": "maryj"
+    },
+    {
+      "id": 1,      
+      "name": "Karen Addams",
+      "email": "karena@abc.com",
+      "password": "karena"
+    },
+    {
+      "id": 2,
+      "name": "Scott Ramsey",
+      "email": "scottr@abc.com",
+      "password": "scottr"
+    }
+  ]
+
+}
