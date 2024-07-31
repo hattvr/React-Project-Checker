@@ -9,6 +9,8 @@ from selenium import webdriver
 from datetime import datetime
 from selenium import webdriver
 
+errored_repos = []
+
 class NodeServer:
     def __init__(self, path, vite_project=False):
         self.path = path
@@ -36,6 +38,8 @@ class NodeServer:
             
 def find_react_project(path: str):
     for root, dirs, _ in os.walk(path):
+        if "node_modules" in dirs:
+            dirs.remove("node_modules")
         if "src" in dirs:
             return root
 
@@ -86,6 +90,8 @@ for index, repo in enumerate(repositories, start=1):
         print(f"[{index}] Skipping {repo['name']} as React project not found")
         continue
     
+    print(f"Project Path: {project_path}")
+    
     try:
         pkg_fp = f"{project_path}/package.json"
         with open(pkg_fp, "r") as f:
@@ -124,4 +130,10 @@ for index, repo in enumerate(repositories, start=1):
         server_process.stop()
     except Exception as e:
         print(f"[{index}] Error occurred while checking {repo['name']}: {e}")
+        errored_repos.append(repo['name'])
         continue
+        
+driver.quit()
+print(f"\033[92mSnapshotted {len(repositories) - len(errored_repos)} repositories successfully\033[0m")
+print(f"\033[91mErrored Repositories: {errored_repos}\033[0m")
+        
