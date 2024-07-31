@@ -15,16 +15,20 @@ class NodeServer:
         self.process = None
     
     def start(self):
-        self.process = subprocess.Popen(['npm', 'start'], cwd=self.path, shell=True)
+        self.process = subprocess.Popen(
+            ['npm', 'start'], 
+            cwd=self.path, 
+            shell=True if os_is_windows else False,
+            preexec_fn=os.setsid if not os_is_windows else None
+        )
+        
         time.sleep(10)
     
     def stop(self):
-        if platform.system() == "Windows":
+        if os_is_windows:
             subprocess.run(["taskkill", "/f", "/im", "node.exe"], shell=True)
         else:
-            if self.process:
-                os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
-                self.process.wait()
+            os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
             
 def find_react_project(path: str):
     for root, dirs, _ in os.walk(path):
@@ -40,6 +44,7 @@ options.add_argument("disable-extensions")
 options.add_argument("--headless")
 
 driver = webdriver.Chrome(options=options)
+os_is_windows: bool = platform.system() == "Windows"
 
 repositories = json.load(open('repos.json'))
 for index, repo in enumerate(repositories, start=1):    
@@ -57,14 +62,13 @@ for index, repo in enumerate(repositories, start=1):
         os.system(f"cd {directory_name}/{repo['url'].split('/')[-1]} && git reset --hard")
         os.system(f"cd {directory_name}/{repo['url'].split('/')[-1]} && git pull")
 
-    project_path = find_react_project(os.path.abspath(f"{directory_name}\{repo['url'].split('/')[-1]}"))
-    print(f"Project path: {project_path}")
+    project_path = find_react_project(f"{directory_name}/{repo['url'].split('/')[-1]}")
     
     pkg_fp = f"{project_path}/package.json"
     with open(pkg_fp, "r") as f:
         package_json = json.load(f)
 
-    if platform.system() == "Windows":
+    if os_is_windows:
         package_json['scripts']['start'] = "cross-env BROWSER=none react-scripts start"
     else:
         package_json['scripts']['start'] = "BROWSER=none react-scripts start"
@@ -72,13 +76,15 @@ for index, repo in enumerate(repositories, start=1):
     with open(pkg_fp, "w") as f:
         json.dump(package_json, f, indent=4)
 
+    install_operations = ["npm", "install"]
+    if os_is_windows:
+        install_operations.append("--save")
+        install_operations.append("cross-env")
+
     subprocess.run(
-        ["npm", "install"]
-        + ["--save", "cross-env"]
-        if platform.system() == "Windows"
-        else [],
-        cwd=project_path, 
-        shell=True
+        args=install_operations,
+        cwd=project_path,
+        shell=True if os_is_windows else False
     )
 
     server_process = NodeServer(project_path)
