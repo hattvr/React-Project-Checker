@@ -124,4 +124,4 @@ for index, repo in enumerate(repositories, start=1):
         server_process.stop()
     except Exception as e:
         print(f"[{index}] Error occurred while checking {repo['name']}: {e}")
-        
+        continue
