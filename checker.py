@@ -31,8 +31,10 @@ class NodeServer:
     
     def stop(self):
         if os_is_windows:
-            port_to_kill = 5173 if self.vite_project else 3000
-            subprocess.run(["npx", "kill-port", str(port_to_kill)], shell=True)
+            subprocess.run(
+                args=["taskkill", "/f", "/t", "/pid", str(self.process.pid)],
+                shell=True,
+            )
         else:
             os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
             
